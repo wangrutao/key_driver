@@ -1,29 +1,21 @@
-#include <linux/module.h>
-#include <linux/init.h>
+#include <asm/io.h>
 #include <linux/fs.h>
+#include <linux/init.h>
 #include <linux/cdev.h>
 #include <linux/slab.h>
-#include <linux/device.h>
-#include <asm/uaccess.h>
-#include <asm/io.h>
-#include <linux/interrupt.h>
 #include <linux/gpio.h>
-#include <linux/delay.h>
-
 #include <linux/wait.h>
-#include <linux/sched.h>
 #include <linux/poll.h>
-
-
-//1.  定义一个等待队列头并且初始化
-wait_queue_head_t wq;
-
+#include <asm/uaccess.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/device.h>
+#include <linux/interrupt.h>
 
 //设备名定义
 #define   DEV_NAME    "wrtdev"
 #define   BTN_SIZE          4      //设备支持的leds数量
-
-char kbuf[BTN_SIZE + 1]  = {"0000"}; //按键缓冲区
 
 //自定义一个数据结构，
 struct mydata {
@@ -55,8 +47,13 @@ static unsigned count = 2;        //设备数量
 static struct device *this_device;
 static  struct class *myclass;    //定义一个class结构指针
 
+char kbuf[BTN_SIZE + 1]  = {"0000"}; //按键缓冲区
+
 static  int ev_press = 0;      //按键动作标志
 
+wait_queue_head_t wq;		//定义一个等待队列头并且初始化
+
+//工作等待队列函数，当中断开启时，把此函数加入到内核共享工作队列，然后工作队列轮到此函数后运行
 void work_func(struct work_struct*  data) {
     struct mydata* p;
     //普通方法
@@ -76,11 +73,11 @@ irqreturn_t  btn_handler(int irq,  void * dev_id) {
 
     pdata = (button_t *)dev_id;        //转换成按键结构
     dn = !gpio_get_value(pdata->gpio); //读取指定IO编号 的电平
-    kbuf[pdata->id]  =  dn + '0' ;
+    kbuf[pdata->id]  =  dn + '0';
 
     //让条件为真
-    ev_press    = 1 ;                  //表示发生了按键动作(松开或按下)
-    wake_up(&wq)   ;                   //唤醒休眠的进程
+    ev_press    = 1;                  //表示发生了按键动作(松开或按下)
+    wake_up(&wq);                   //唤醒休眠的进程
 
     //调度工作（把工作结构添加到内核共享工作队列上等待执行）
     schedule_work(&gvar.work1);
@@ -210,7 +207,6 @@ static int __init mydev_init(void)
     //输出主设备号
     printk("major:%d\n", MAJOR(dev_nr));
     printk(" cdev_add  ok\r\n");
-
 
     //创建设备类
     myclass = class_create(THIS_MODULE, "myclass");
