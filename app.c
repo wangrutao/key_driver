@@ -12,8 +12,6 @@
 #include <sys/ioctl.h>
 #include <poll.h>
 
-
-
 //argv[2]: 0 表示阻塞  1表示非阻塞
 //./app /dev/mybtn0 0/1
 int main(int argc, char * argv[]) {
