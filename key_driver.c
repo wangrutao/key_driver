@@ -166,10 +166,10 @@ unsigned int key_poll(struct file *pfile, struct poll_table_struct *poll_table) 
 
 //核心是实现文件操作方法
 static  struct file_operations myfops = {
-    .open      = xxx_open,
-    .release   = xxx_release,
-    .read      = xxx_read,
-    .poll      = xxx_poll,
+    .open      = key_open,
+    .release   = key_release,
+    .read      = key_read,
+    .poll      = key_poll,
 };
 
 //模块安装成功返回 0，负数失败
